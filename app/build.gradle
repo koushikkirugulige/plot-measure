@@ -1,0 +1,25 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.plotmeasure.app'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.plotmeasure.app'
+        minSdk 26
+        targetSdk 35
+        versionCode 4
+        versionName '0.2.1'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError true }
+    buildTypes { release { debuggable false } }
+}
+
+dependencies {
+    implementation project(':measurement')
+    implementation 'com.google.ar:core:1.57.0'
+    testImplementation 'junit:junit:4.13.2'
+}

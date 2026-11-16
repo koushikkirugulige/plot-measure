@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">Plot Measure</string>
+    <string name="camera_access">CAMERA ACCESS NEEDED</string>
+    <string name="permission_hint">Tap + to open settings and allow Camera access.</string>
+    <string name="installing_ar">INSTALLING AR SERVICES</string>
+    <string name="scanning">SCANNING SURFACES</string>
+    <string name="tracking_resume_hint">Points retained. Tracking paused — look back toward the scene.</string>
+    <string name="saved_points">Saved points: %1$d · Outside view: %2$d</string>
+    <string name="saved_points_paused">Saved points: %1$d · Waiting for tracking</string>
+    <string name="saved_points_manual_pause">Saved points: %1$d · Paused</string>
+    <string name="resume_scanning">Scan the scene to recover tracking before marking.</string>
+    <string name="pause_measurement">Pause</string>
+    <string name="resume_measurement">Resume</string>
+    <string name="points_retained">Points retained: %1$d</string>
+    <string name="recheck_corners">Recheck corners</string>
+    <string name="correct_boundary">Undo or reset to correct the boundary</string>
+    <string name="perimeter_summary">Corners: %1$d · Perimeter %2$s</string>
+    <string name="distance_summary">Distance between your two points</string>
+    <string name="height_summary">Vertical height above the floor mark</string>
+    <string name="aim_height">Aim at the top of the head, directly above the floor mark</string>
+    <string name="mark_height_base">First mark the floor directly beneath the head</string>
+    <string name="ready">Ready to measure</string>
+    <string name="ar_unavailable">AR UNAVAILABLE</string>
+    <string name="points_marked">Points marked: %1$d</string>
+    <string name="open_boundary">Corners: %1$d · Open boundary %2$s</string>
+    <string name="aim_endpoint">Aim at the end point</string>
+    <string name="start_alignment">Mark the first point to start the alignment guide</string>
+    <string name="mark_ground">Mark ground corners in boundary order</string>
+    <string name="mark_object">Mark two points on a nearby object</string>
+    <string name="ar_notice">This application runs on Google Play Services for AR (ARCore), which is provided by Google LLC and governed by Google’s Privacy Policy: https://policies.google.com/privacy</string>
+</resources>

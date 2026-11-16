@@ -1,0 +1,46 @@
+# Prototype validation
+
+Date: 11 November 2026. Build: 0.2.1, version code 4.
+
+## Automated checks
+
+- `:measurement:test`: 76 tests pass: 26 existing measurement tests, 20 screen-projection tests, 9 height tests, 7 stability tests and 14 new alignment-guide tests.
+- `:app:testReleaseUnitTest`: 11 tests pass: 7 camera lifecycle tests and 4 photo buffer/export cleanup tests.
+- Total: **87 passed**, zero failures, errors or skipped tests. The 73 existing tests also passed before this change.
+- Alignment tests cover horizontal directions with changing X and Z, signed high/low errors, vertical alignment above/below the first point, combined sideways errors, short-line angle and long-line offset limits, opposite directions, missing targets/tracking/first points, guides Off, live anchor updates, completed measurements, undo/reset/mode changes, unit conversion and completed-result wording. They verify that evaluating a guide leaves the original endpoints and 3D distance unchanged.
+- Height tests cover known heights, different camera viewpoints and floor elevations, ray scale, lateral alignment, invalid/behind/vertical rays, vertical rather than diagonal length, undo/reset and updates of the base anchor.
+- Stability tests cover the half-second continuous window, allowed small jitter, target changes, missing tracking, pause/reset, frame gaps, new-session timestamps and stale repeated frames.
+- Camera lifecycle tests use a fake camera driver to verify start/stop decisions: foreground/background, manual pause through lock/unlock and Activity restoration, export completion while backgrounded, returning from the picker before export completes, failure/destruction, permission/install retries and duplicate events. They do not execute Android lifecycle callbacks or a real ARCore camera.
+- Photo tests cover cancellation, replacement, ownership transfer, successful writes and failing destination streams. The new path writes no temporary PNG to app storage. Source review checks that Activity cancellation, destruction and export-completion paths call the cleanup helper.
+- `:app:assembleRelease`: passes. `:app:lintRelease`: no errors; two existing portrait-orientation warnings remain.
+- APK metadata: package `com.plotmeasure.app`, minimum API 26, target API 35, version 0.2.1/code 4, Camera only, no Internet permission, debugging disabled. The launcher Activity is exported; ARCore's installation Activity is not exported. No service, receiver or content provider is declared.
+- APK signature and ZIP alignment are checked after signing with the retained release key. The certificate matches 0.2.0, permitting a direct update. It differs from the old debug APK; installation over 0.1.x requires removing that debug build once. Signing details are in `SIGNING.md`.
+
+The build environment has no Android Platform Tools/ADB package, emulator or connected test-device session available through the tools used here. No phone installation, runtime screenshots, camera-release trace, battery measurements or physical accuracy checks were performed. The build reports unstripped vendor ARCore native libraries and some deprecated platform APIs; compilation succeeds. Local software tests cannot establish device compatibility or accuracy by themselves.
+
+## Self-review
+
+- **Scope / SOLID / minimal diff:** 0.2.1 adds optional horizontal/vertical guides in Distance mode, their control/overlay/readout/help, tests and release documentation/versioning. `AlignmentGuide` owns the pure geometry; the existing renderer owns guide selection and computes results from the current frame; Activity and overlay present them. No unrelated refactor or change to the Height/Plot models was made.
+- **World-coordinate correctness:** Horizontal fixes the guide's Y to the first point and permits any XZ direction. Vertical fixes both X and Z. The reference point is only projected for display; ADD still anchors the original hit. Measurements are never snapped or flattened. Current-frame anchor updates affect the guide; numerical world coordinates are not cached across frames. Off-screen clipping uses real projected coordinates, not arrow locations.
+- **Tracking and lifecycle:** missing surface hits or tracking suppress live alignment. Guides remain advisory and do not bypass stability or tracking checks. Completed readouts use tracked endpoints; Undo/Reset/mode changes use the existing model state. The new control is disabled with other controls on pause/failure and the guide overlay is hidden by the existing pause cover. No camera lifecycle logic was changed.
+- **Privacy / security / dependencies:** no new permissions, storage, network calls, logging, executable downloads or runtime dependencies. The guide choice is session-only. Advisory lines are excluded from photo exports. Existing in-memory photo cleanup, backup exclusions, release debugging configuration and private signing-key exclusions are retained.
+- **Compatibility:** package ID and release signing identity remain unchanged; version code increases from 3 to 4. This is an update over 0.2.0. Existing free Distance, Height and Plot semantics remain intact, and guides start Off. No data migration is needed.
+- **Performance:** a guide uses constant work on two points and one additional projection, with a few clipped overlay primitives and a text readout. It creates no extra anchors or threads. All existing point and lifecycle limits remain. Runtime frame rate and battery impact have not been measured.
+- **Observability / quality:** offset, tilt, alignment state and directional prompts are visible in text as well as color. A completed result says Not level / Not vertical instead of instructing the user to move a target that has already been fixed. The 2 cm and 2° thresholds are documented as guidance, not calibrated accuracy. No per-frame logs or telemetry were added. Final source changes were reviewed against the requested scope, and existing tests still pass.
+
+## Required device checks
+
+These checks are **not yet performed on 0.2.1**:
+
+1. On OnePlus 13s and Moto Edge 40, update from release 0.2.0, or uninstall the older debug app before installing. Grant/deny/recover Camera permission and test AR service setup. Verify Android shows version 0.2.1.
+2. Measure taped 1 m and 3 m spans repeatedly, horizontally and vertically. Confirm unstable targeting disables **+**, steady targeting enables it, and m/ft conversion and annotations work.
+3. Measure a taped vertical reference and a person's independently known height. Mark the floor below the subject first; test the top with no detectable head surface, moving the phone between viewpoints, deliberately misaligned targets, undoing/replacing the top and moving/resetting the base. Record errors; no tolerance is promised yet.
+4. Measure a known 3 × 4 m rectangle and compare sides, 14 m perimeter and 12 m² area. Repeat with concave and crossed boundaries and undo/reset. Walk a larger known plot, return to the first corner and record drift.
+5. Turn away from marked points, including behind the phone, then return. Verify numbered arrows, saved counts, live previews and continued measurement while anchors remain tracked.
+6. Use Pause/Resume, Home, app switching, screen lock and return, including while a mode dialog or file picker is open. Confirm camera access and rendering stop, manual pause survives return and the screen can sleep. Check ARCore's documented possible up-to-10-second compute tail after pause before judging sustained background activity.
+7. Save/cancel photos, deny/fail the destination provider, background during capture/encoding/export, and kill/recreate the Activity while the picker is open. Verify no private cached photo is left, no picker opens unexpectedly over another app, no camera resumes behind the picker, and lost captures request recapture. A destination provider may leave an empty/partial file after interruption; inspect it separately from app cache.
+8. Profile battery use and temperature over comparable active, manually paused and background intervals at comparable brightness. No battery-drain rate or improvement has been measured yet.
+9. Check small-screen and large-font portrait layouts, especially the Guide/Pause row, alignment offset text, three mode buttons, height guide and edge indicators. Test camera/photo annotation alignment and accessibility.
+10. In Distance mode, cycle Off/Horizontal/Vertical. Mark a known level line and a plumb vertical reference, above and below the start. Deliberately aim too high/low/sideways and check the blue reference ring, correction connector, signed offset and tilt. Move/roll the phone to confirm guides follow world gravity rather than screen edges; move the first point off-screen and return. Test short/long spans, absent surface hits, lost tracking, completed readings, Undo/Reset, mode switching, m/ft and Pause/Resume. Confirm misaligned points remain markable once stable, results are not snapped, and advisory lines/rings do not appear in exported photos.
+
+The earlier 0.1.1 off-screen issue was reproduced by 10 failing projection tests before its fix. The user reported that the original marker returned when pointing back. That history does not constitute physical validation of this new release.
